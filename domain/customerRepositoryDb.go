@@ -5,6 +5,7 @@ import (
 	"banking/logger"
 	"database/sql"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"time"
 )
@@ -15,6 +16,7 @@ type CustomerRepositoryDb struct {
 
 func (d CustomerRepositoryDb) FindAll() ([]Customer, error) {
 	findALlSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers"
+	var err error
 
 	rows, err := d.client.Query(findALlSql)
 	if err != nil {
@@ -23,15 +25,20 @@ func (d CustomerRepositoryDb) FindAll() ([]Customer, error) {
 	}
 
 	customers := make([]Customer, 0)
-	for rows.Next() {
-		var c Customer
-		err := rows.Scan(&c.Id, &c.Name, &c.City, &c.Zipcode, &c.DateofBirth, &c.Status)
-		if err != nil {
-			logger.Error("Error while scanning customers " + err.Error())
-			return nil, err
-		}
-		customers = append(customers, c)
+	err = sqlx.StructScan(rows, &customers)
+	if err != nil {
+		logger.Error("Error while scanning customers " + err.Error())
+		return nil, err
 	}
+	//for rows.Next() {
+	//	var c Customer
+	//	err := rows.Scan(&c.Id, &c.Name, &c.City, &c.Zipcode, &c.DateofBirth, &c.Status)
+	//	if err != nil {
+	//		logger.Error("Error while scanning customers " + err.Error())
+	//		return nil, err
+	//	}
+	//	customers = append(customers, c)
+	//}
 	return customers, nil
 }
 
