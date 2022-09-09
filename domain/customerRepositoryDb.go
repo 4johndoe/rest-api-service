@@ -11,43 +11,36 @@ import (
 )
 
 type CustomerRepositoryDb struct {
-	client *sql.DB
+	client *sqlx.DB
 }
 
 func (d CustomerRepositoryDb) FindAll() ([]Customer, error) {
-	findALlSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers"
 	var err error
+	var status string
+	customers := make([]Customer, 0)
 
-	rows, err := d.client.Query(findALlSql)
+	if status == "" {
+		findALlSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers"
+		err = d.client.Select(&customers, findALlSql)
+	} else {
+		findALlSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers where status = $1"
+		err = d.client.Select(&customers, findALlSql, status)
+	}
+
 	if err != nil {
 		logger.Error("Error while querying customer table " + err.Error())
 		return nil, err
 	}
 
-	customers := make([]Customer, 0)
-	err = sqlx.StructScan(rows, &customers)
-	if err != nil {
-		logger.Error("Error while scanning customers " + err.Error())
-		return nil, err
-	}
-	//for rows.Next() {
-	//	var c Customer
-	//	err := rows.Scan(&c.Id, &c.Name, &c.City, &c.Zipcode, &c.DateofBirth, &c.Status)
-	//	if err != nil {
-	//		logger.Error("Error while scanning customers " + err.Error())
-	//		return nil, err
-	//	}
-	//	customers = append(customers, c)
-	//}
 	return customers, nil
 }
 
 func (d CustomerRepositoryDb) ById(id string) (*Customer, *errs.AppError) {
 	customerSql := "select customer_id, name, city, zipcode, date_of_birth, status from customers where customer_id = $1"
 
-	row := d.client.QueryRow(customerSql, id)
 	var c Customer
-	err := row.Scan(&c.Id, &c.Name, &c.City, &c.Zipcode, &c.DateofBirth, &c.Status)
+	err := d.client.Get(&c, customerSql, id)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errs.NewNotFoundError("Customer not found")
@@ -62,7 +55,7 @@ func (d CustomerRepositoryDb) ById(id string) (*Customer, *errs.AppError) {
 func NewCustomerRepositoryDb() CustomerRepositoryDb {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		"localhost", 5434, "postgres", "postgres", "postgres")
-	client, err := sql.Open("postgres", psqlInfo)
+	client, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
