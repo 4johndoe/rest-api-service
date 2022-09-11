@@ -48,7 +48,7 @@ func getDbClient() *sqlx.DB {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		dbAddr, dbPort, dbUser, dbPasswd, dbName)
 	client, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
