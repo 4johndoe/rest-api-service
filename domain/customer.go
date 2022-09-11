@@ -1,6 +1,9 @@
 package domain
 
-import "banking/errs"
+import (
+	"banking/dto"
+	"banking/errs"
+)
 
 type Customer struct {
 	Id          string `db:"customer_id"`
@@ -9,6 +12,17 @@ type Customer struct {
 	Zipcode     string
 	DateofBirth string `db:"date_of_birth"`
 	Status      string
+}
+
+func (c Customer) ToDto() dto.CustomerResponse {
+	return dto.CustomerResponse{
+		Id:          c.Id,
+		Name:        c.Name,
+		City:        c.City,
+		Zipcode:     c.Zipcode,
+		DateofBirth: c.DateofBirth,
+		Status:      c.Status,
+	}
 }
 
 type CustomerRepository interface {
